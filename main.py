@@ -23,27 +23,34 @@ class Index(webapp2.RequestHandler):
     """
 
     def get(self):
+
+        error_username = self.request.get("error_username")
+        error_password = self.request.get("error_password")
+        error_verify = self.request.get("error_verify")
+        error_email = self.request.get("error_email")
+
+
+
+        # if error:
+        #     error_esc = cgi.escape(error, quote=True)
+        #     error_element = "<p class='error'>" + error_esc + "</p>"
+        # else:
+        #     error_element = ""
+
         html = """
         <form action="/welcome" method="post">
         <h2> Signup </h2>
-        Username <input type="text" name="username"> <br>
-        Password <input type="text" name="password"> <br>
-        Verify Password <input type="text" name="verify"> <br>
-        Email (optional) <input type="text" name="email"> <br>
+        Username <input type="text" name="username">""" + error_username + """ <br>
+        Password <input type="text" name="password">""" + error_password + """ <br> <br>
+        Verify Password <input type="text" name="verify">""" + error_verify + """ <br> <br>
+        Email (optional) <input type="text" name="email">""" + error_email + """ <br>
 
         <button>Submit</button>
         </form>
 
         """
 
-        error = self.request.get("error")
-        if error:
-            error_esc = cgi.escape(error, quote=True)
-            error_element = "<p class='error'>" + error_esc + "</p>"
-        else:
-            error_element = ""
-
-        self.response.out.write(html + error_element)
+        self.response.out.write(html)
 
 class Welcome(webapp2.RequestHandler):
     """
@@ -59,11 +66,17 @@ class Welcome(webapp2.RequestHandler):
 
         # if the user typed nothing at all, redirect and yell at them
         if (username.strip() == ""):
-            error = "Give me a little more than nothing here, buddy"
-            self.redirect("/?error=" + cgi.escape(error, quote=True))
+            error_username = "Give me a little more than nothing here, buddy"
+            self.redirect("/?error_username=" + cgi.escape(error_username, quote=True))
         elif " " in username:
-            error = "No usernames with spaces, doofus"
-            self.redirect("/?error=" + cgi.escape(error, quote=True))
+            error_username = "No spaces, doofus"
+            self.redirect("/?error_username=" + cgi.escape(error_username, quote=True))
+        elif password != verify:
+            error_password = "What's your malfunction brother, can't type?"
+            self.redirect("/?error_password=" + cgi.escape(error_password, quote=True))
+        elif (username.strip() == ""):
+            error_email = "Give me a little more than nothing here, buddy"
+            self.redirect("/?error_email=" + cgi.escape(error_email, quote=True))
 
         # write output
         self.response.out.write("<strong> Welcome, " + username + "  </strong>")
