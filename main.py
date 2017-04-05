@@ -16,11 +16,14 @@
 #
 import webapp2
 import cgi
+import re
 
 class Index(webapp2.RequestHandler):
     """
     Handles requests coming into "/" root
     """
+
+
 
     def get(self):
 
@@ -29,21 +32,16 @@ class Index(webapp2.RequestHandler):
         error_verify = self.request.get("error_verify")
         error_email = self.request.get("error_email")
 
-
-
-        # if error:
-        #     error_esc = cgi.escape(error, quote=True)
-        #     error_element = "<p class='error'>" + error_esc + "</p>"
-        # else:
-        #     error_element = ""
+        username = self.request.get("username")
+        email = self.request.get("email")
 
         html = """
         <form action="/welcome" method="post">
         <h2> Signup </h2>
-        Username <input type="text" name="username">""" + error_username + """ <br>
-        Password <input type="text" name="password">""" + error_password + """ <br> <br>
-        Verify Password <input type="text" name="verify">""" + error_verify + """ <br> <br>
-        Email (optional) <input type="text" name="email">""" + error_email + """ <br>
+        Username <input type="text" name="username" value="{0}"><font color="red">   """.format(username) + error_username + """</font> <br> <br>
+        Password <input type="text" name="password"><font color="red">   """ + error_password + """</font> <br> <br>
+        Verify Password <input type="text" name="verify"><font color="red">   """ + error_verify + """</font> <br> <br>
+        Email (optional) <input type="text" name="email" value="{0}"><font color="red">   """.format(email) + error_email + """</font> <br>
 
         <button>Submit</button>
         </form>
@@ -64,19 +62,35 @@ class Welcome(webapp2.RequestHandler):
         verify = self.request.get("verify")
         email = self.request.get("email")
 
+        # RE methods
+
+        USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
+        PASS_RE = re.compile(r"^.{3,20}$")
+        EMAIL_RE = re.compile(r"^[\S]+@[\S]+.[\S]+$")
+
+        def valid_email(email):
+            return USER_RE.match(email)
+
+
         # if the user typed nothing at all, redirect and yell at them
         if (username.strip() == ""):
-            error_username = "Give me a little more than nothing here, buddy"
+            error_username = "Nothin from nothin leaves nothin, you've gotta have somethin"
+            self.redirect("/?error_username=" + cgi.escape(error_username, quote=True))
+        elif USER_RE.match(username) == None:
+            error_username = "Testing my patience here buddy"
             self.redirect("/?error_username=" + cgi.escape(error_username, quote=True))
         elif " " in username:
             error_username = "No spaces, doofus"
             self.redirect("/?error_username=" + cgi.escape(error_username, quote=True))
-        elif password != verify:
+        elif password == "":
+            error_password = "Nothin from nothin..."
+            self.redirect("/?error_password=" + cgi.escape(error_password, quote=True) + "&username=" + cgi.escape(username, quote=True) + "&email=" + cgi.escape(email, quote=True))
+        elif password != verify or PASS_RE.match(password) == None:
             error_password = "What's your malfunction brother, can't type?"
-            self.redirect("/?error_password=" + cgi.escape(error_password, quote=True))
-        elif (username.strip() == ""):
-            error_email = "Give me a little more than nothing here, buddy"
-            self.redirect("/?error_email=" + cgi.escape(error_email, quote=True))
+            self.redirect("/?error_password=" + cgi.escape(error_password, quote=True) + "&username=" + cgi.escape(username, quote=True) + "&email=" + cgi.escape(email, quote=True))
+        elif EMAIL_RE.match(email) == None and email != "":
+            error_email = "You're killing me here dude"
+            self.redirect("/?error_email=" + cgi.escape(error_email, quote=True) + "&username=" + cgi.escape(username, quote=True) + "&email=" + cgi.escape(email, quote=True))
 
         # write output
         self.response.out.write("<strong> Welcome, " + username + "  </strong>")
